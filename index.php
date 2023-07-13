@@ -22,11 +22,18 @@
 </head>
 <body>
     <h2>英単語学習アプリ</h2>
-    <h4>サンプル問題</h4>
+    <h4>サンプル問題（空欄1個）</h4>
     <div class="practice-exam-btn-group">
         <div class="btn-group" role="group" aria-label="Basic outlined example">
             <a class="btn btn-primary btn-padding" href="./word/?test_no=1">例文一覧</a>
             <a class="btn btn-danger btn-padding" href="./test/?test_no=1">単語テスト</a>
+        </div>
+    </div>
+    <h4>サンプル問題（空欄複数）</h4>
+    <div class="practice-exam-btn-group">
+        <div class="btn-group" role="group" aria-label="Basic outlined example">
+            <a class="btn btn-primary btn-padding" href="./word/?test_no=2">例文一覧</a>
+            <a class="btn btn-danger btn-padding" href="./test/?test_no=2">単語テスト</a>
         </div>
     </div>
 </body>
