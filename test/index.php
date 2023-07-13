@@ -95,10 +95,7 @@ if(empty($words)){
 <body style="padding: 20px">
 
 <div style="margin: 30px auto; text-align: center">
-    <div class="btn-group" role="group" aria-label="Basic outlined example">
-        <a class="btn btn-outline-primary" href="/">トップへ</a>
-        <a class="btn btn-primary" href="/eng-B/">ページ選択へ</a>
-    </div>
+    <a class="btn btn-outline-primary" href="/">トップへ</a>
 </div>
 <h2>第<?=$_GET['test_no']?>回 模擬テスト</h2>
 
