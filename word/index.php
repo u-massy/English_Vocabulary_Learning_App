@@ -1,32 +1,38 @@
 <?php
+
+header('Cache-Control: no-store, no-cache, must-revalidate');
+header('Cache-Control: post-check=0, pre-check=0', FALSE);
+header('Pragma:no-cache');
+
 session_start();
 require_once("../env.php"); //DB接続情報の読み込み
-$pdo = db();//DB名を引数として渡す
+$pdo = db();
 
-function selectWords_1($no) {
-    if(isset($_GET['test_no'])){
-        $test_no = $_GET['test_no'];
-    }else{
-        header( "Location: ./?test_no=1" );
-        exit;
-    }
-    return $no['test_no'] == $test_no;
+if(empty($_GET['test_no'])){
+    header( "Location: /" );
+    exit;
+}else{
+    $test_no = explode(",", $_GET['test_no']);
 }
+
 
 $stmt = $pdo->query("select * from WORD_SAMPLE_DATA");
 $array = $stmt->fetchAll();
 
-$words = array_values(array_filter($array, "selectWords_1"));
-if(empty($words)){
-    header( "Location: ./?test_no=1" );
-    exit;
+$words = [];
+foreach($test_no as $key => $value) {
+    $word_array[$key] = array_filter($array, function($val) use ($value) {
+        return $val['test_no'] == $value;
+    });
+    $words += $word_array[$key];
 }
+
+$words = array_values($words);
 
 $words_count = count($words);
 
 $count_kakko = 1;
 $random = rand(0,$words_count-1);
-
 
 $eng_data = $words[$random]['English'];
 
@@ -60,10 +66,10 @@ $read_eng = str_replace("'", "\'", $read_eng);
 
 $words_kugire[] = [0];
 $words_kugire_count = 0;
-for($i = 0; $i < count($words); $i++){
-    for($j = 0; $j < mb_substr_count($words[$i]['English'], '(') ; $j++){
+foreach($words as $key => $value) {
+    for($i = 0; $i < mb_substr_count($words[$key]['English'], '('); $i++){
         $words_kugire_count++;
-        $words_kugire[$i][$j] = $words_kugire_count;
+        $words_kugire[$key][$i] = $words_kugire_count;
     }
 }
 ?>
@@ -145,10 +151,10 @@ for($i = 0; $i < count($words); $i++){
         <tr>
             <td>
                 <div class="text-center">
-                    <input class="btn btn-secondary btn-sm" type="button" value="切替" onclick="<?php for($i = 0; $i < count($words_kugire[$random]); $i++){echo("red_change(".($i + 1)."); ");}?>">
+                    <input class="btn btn-secondary btn-sm" type="button" value="切替" onclick="<?php foreach($words_kugire[$random] as $key => $value){echo("red_change(".($key + 1)."); ");}?>">
                 </div>
             </td>
-            <td style="text-align: left;"><?php echo $words[$random]['dic_no']; ?>.<?php echo $words[$random]['Japanese']; ?></td>
+            <td style="text-align: left;"><?=$words[$random]['dic_no']; ?>.<?=$words[$random]['Japanese']; ?></td>
         </tr>
         <tr>
             <td>
@@ -158,9 +164,10 @@ for($i = 0; $i < count($words); $i++){
                     </button>
                 </div>
             </td>
+            <?php /*
             <td style="font-family: 'Noto Serif', serif;">
                 <?php
-                for($i = 0; $i <= count($eng[$words_count]) + 1; $i++){
+                for($i = 0; $i < count($eng[$words_count]); $i++){
                     if($i % 2) {
                         if($words_kugire[$random][($i - 1)/ 2] != ''){
                             echo ("<a id=\"red_change_".(($i + 1) / 2 )."\" style=\"color: white\" onclick=\"readEnglish('".$eng[$words_count][$i]."');\">".$eng[$words_count][$i]."</a>");
@@ -169,8 +176,21 @@ for($i = 0; $i < count($words); $i++){
                         echo $eng[$words_count][$i];
                     }
                 }
-
                 ?>
+            </td> */?>
+            <td style="font-family: 'Noto Serif', serif;">
+                <?php
+                
+                foreach($eng[$words_count] as $key_eng => $value_eng) {
+                    if($key_eng % 2) {
+                        if($words_kugire[$random][($key_eng - 1)/ 2] != ''){
+                            echo ("<a id=\"red_change_".(($key_eng + 1)/ 2)."\" style=\"color: white\" onclick=\"readEnglish('".$value_eng."');\">".$value_eng."</a>");
+                        }
+                    }else{
+                        echo $value_eng;
+                    }
+                }
+                ?> 
             </td>
         </tr>
     </table>
@@ -185,30 +205,29 @@ for($i = 0; $i < count($words); $i++){
         <td></td>
         <td></td>
     </tr>
-    <?php for($count = 0; $count < $words_count; $count++){?>
+    <?php foreach($words as $key_word => $value) {?>
         <?php
-        $eng_data = $words[$count]['English'];
+        $eng_data = $words[$key_word]['English'];
 
-        $start[$count][0] = 0;
-        $end[$count][0] = mb_strpos($eng_data,'(', 0)+1;;
+        $start[$key_word][0] = 0;
+        $end[$key_word][0] = mb_strpos($eng_data,'(', 0)+1;;
 
         for($i = 0; $i < mb_substr_count($eng_data, '(') * 2 + 1; $i++ ){
             if($i == 0){
-                $start[$count][$i] = 0;
+                $start[$key_word][$i] = 0;
             }elseif($i % 2){
-                $start[$count][$i] = mb_strpos($eng_data,'(', $start[$count][$i - 1])+1;
-
+                $start[$key_word][$i] = mb_strpos($eng_data,'(', $start[$key_word][$i - 1])+1;
             }else{
-                $start[$count][$i] = mb_strpos($eng_data,')', $start[$count][$i - 1]);
+                $start[$key_word][$i] = mb_strpos($eng_data,')', $start[$key_word][$i - 1]);
             }
             if($i == (mb_substr_count($eng_data, '(')* 2)){
-                $end[$count][$i] = strlen($eng_data);
+                $end[$key_word][$i] = strlen($eng_data);
             }elseif($i % 2){
-                $end[$count][$i] = mb_strpos($eng_data,')', $start[$count][$i]);
+                $end[$key_word][$i] = mb_strpos($eng_data,')', $start[$key_word][$i]);
             }else{
-                $end[$count][$i] = mb_strpos($eng_data,'(', $start[$count][$i])+1;
+                $end[$key_word][$i] = mb_strpos($eng_data,'(', $start[$key_word][$i])+1;
             }
-            $eng[$count][$i] = mb_substr($eng_data, $start[$count][$i], $end[$count][$i]-$start[$count][$i]);
+            $eng[$key_word][$i] = mb_substr($eng_data, $start[$key_word][$i], $end[$key_word][$i]-$start[$key_word][$i]);
         }
 
         $read_eng = str_replace('(', '', $eng_data);
@@ -218,13 +237,13 @@ for($i = 0; $i < count($words); $i++){
         $read_eng = str_replace("'", "\'", $read_eng);
 
         ?>
-        <tr id="<?=$words[$count]['dic_no']; ?>">
+        <tr id="<?=$words[$key_word]['dic_no']; ?>">
             <td>
                 <div style="text-align: center; ">
-                    <input class="btn btn-secondary btn-sm" type="button" value="切替" onclick="<?php for($i = 0; $i < count($words_kugire[$count]); $i++){echo("red_change(".($i + $words_kugire[$count][0] + 10)."); ");}?>">
+                    <input class="btn btn-secondary btn-sm" type="button" value="切替" onclick="<?php for($i = 0; $i < count($words_kugire[$key_word]); $i++){echo("red_change(".($i + $words_kugire[$key_word][0] + 10)."); ");}?>">
                 </div>
             </td>
-            <td><?=$words[$count]['dic_no']; ?>.<?=$words[$count]['Japanese']; ?></td>
+            <td><?=$words[$key_word]['dic_no']; ?>.<?=$words[$key_word]['Japanese']; ?></td>
         </tr>
         <tr>
             <td>
@@ -236,15 +255,14 @@ for($i = 0; $i < count($words); $i++){
             </td>
             <td style="font-family: 'Noto Serif', serif;">
                 <?php
-                for($i = 0; $i <= count($eng[$count]) + 1; $i++){
-                    if($i % 2) {
-                        echo ("<a id=\"red_change_".($words_kugire[$count][($i - 1)/ 2]+ 10)."\" style=\"color: white\" onclick=\"readEnglish('".$eng[$count][$i]."');\">".$eng[$count][$i]."</a>");
+                foreach($eng[$key_word] as $key_eng => $value_eng) {
+                    if($key_eng % 2) {
+                        echo ("<a id=\"red_change_".($words_kugire[$key_word][($key_eng - 1)/ 2]+ 10)."\" style=\"color: white\" onclick=\"readEnglish('".$value_eng."');\">".$value_eng."</a>");
                     }else{
-                        echo $eng[$count][$i];
+                        echo $value_eng;
                     }
                 }
-
-                ?>
+                ?> 
             </td>
         </tr>
         <tr>
